@@ -1,4 +1,4 @@
-﻿# AI Customer Sentiment Analyzer
+﻿# Phân tích cảm xúc khách hàng
 
 ## Mô tả dự án
 
