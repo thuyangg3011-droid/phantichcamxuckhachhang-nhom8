@@ -1,110 +1,108 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Phân tích cảm xúc AI</title>
-
-<link rel="stylesheet" href="style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sentiment Analysis - Phân Tích Cảm Xúc</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .result-box { transition: all 0.3s ease; }
+    </style>
 </head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-<body>
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl">
+        <h1 class="text-2xl font-bold text-center text-blue-600 mb-6 underline">ĐỀ 5: PHÂN TÍCH CẢM XÚC KHÁCH HÀNG</h1>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 font-semibold mb-2">Nhập phản hồi khách hàng:</label>
+            <textarea id="userInput" rows="4" 
+                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                placeholder="Ví dụ: Sản phẩm rất tốt, giao hàng nhanh tuyệt vời..."></textarea>
+        </div>
 
-<header class="header">
+        <button onclick="analyzeSentiment()" id="btnAnalyze"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300">
+            Phân Tích Ngay (AI Studio)
+        </button>
 
-<h1 class="header-title">Phân tích cảm xúc khách hàng</h1>
+        <div id="resultContainer" class="hidden mt-8 p-6 rounded-lg text-center result-box border-2">
+            <p class="text-sm uppercase tracking-widest font-bold opacity-70">Kết quả phân tích</p>
+            <h2 id="sentimentLabel" class="text-3xl font-black my-2">--</h2>
+            <p id="sentimentScore" class="italic text-gray-600"></p>
+        </div>
 
-<p class="subtitle">
-Nhập phản hồi của khách hàng để AI phân tích cảm xúc
-</p>
+        <div id="loading" class="hidden mt-4 text-center text-blue-500 font-medium italic">
+            Đang gửi dữ liệu lên AI Studio...
+        </div>
+    </div>
 
-</header>
+    <script type="module">
+        // Import Google Generative AI thư viện từ CDN
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-<main>
+        // --- CẤU HÌNH API KEY CỦA BẠN TẠI ĐÂY ---
+        const API_KEY = "THAY_THE_API_KEY_CUA_BAN_TAI_DAY";
 
-<section class="container">
+        async function analyzeSentiment() {
+            const text = document.getElementById('userInput').value;
+            const btn = document.getElementById('btnAnalyze');
+            const resultBox = document.getElementById('resultContainer');
+            const loading = document.getElementById('loading');
 
-<div class="theme-picker">
-  <label for="themeColor">Chọn màu giao diện:</label>
-  <input type="color" id="themeColor" value="#667eea" title="Chọn màu chính" />
-</div>
+            if (!text.trim()) {
+                alert("Vui lòng nhập văn bản!");
+                return;
+            }
 
-<form id="sentimentForm" class="sentiment-form">
+            // Hiển thị trạng thái đang xử lý
+            loading.classList.remove('hidden');
+            resultBox.classList.add('hidden');
+            btn.disabled = true;
 
-<label for="feedback" class="input-label">
-Phản hồi khách hàng
-</label>
+            try {
+                const genAI = new GoogleGenerativeAI(API_KEY);
+                const model = genAI.getGenerativeModel({ 
+                    model: "gemini-1.5-flash",
+                    systemInstruction: "Bạn là chuyên gia phân tích cảm xúc. Hãy đọc đoạn văn bản và trả về kết quả theo định dạng JSON: {\"label\": \"Tích cực\" | \"Tiêu cực\" | \"Trung lập\", \"score\": \"1-5\", \"reason\": \"lý do ngắn gọn\"}. Chỉ trả về JSON, không nói gì thêm."
+                });
 
-<textarea
-id="feedback"
-name="feedback"
-class="input-area"
-placeholder="Ví dụ: Sản phẩm rất tốt, giao hàng nhanh"
-aria-label="Nhập phản hồi khách hàng"
-required>
-</textarea>
+                const result = await model.generateContent(text);
+                const response = await result.response;
+                const data = JSON.parse(response.text());
 
-<button
-id="analyzeBtn"
-class="btn-primary"
-type="button">
-<i class="fas fa-brain"></i>
-<span class="btn-text">Phân tích cảm xúc</span>
-</button>
+                displayResult(data);
+            } catch (error) {
+                console.error(error);
+                alert("Có lỗi xảy ra khi gọi AI. Hãy kiểm tra API Key!");
+            } finally {
+                loading.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
 
-</form>
+        function displayResult(data) {
+            const resultBox = document.getElementById('resultContainer');
+            const label = document.getElementById('sentimentLabel');
+            const score = document.getElementById('sentimentScore');
 
-<div
-id="resultBox"
-class="result-box hidden"
-aria-live="polite">
+            resultBox.classList.remove('hidden');
+            label.innerText = data.label;
+            score.innerText = Điểm: ${data.score}/5 - ${data.reason};
 
-<h3 class="result-title">Kết quả phân tích</h3>
+            // Thay đổi màu sắc dựa trên cảm xúc
+            resultBox.className = "mt-8 p-6 rounded-lg text-center result-box border-2 ";
+            if (data.label === "Tích cực") {
+                resultBox.classList.add("bg-green-100", "border-green-500", "text-green-800");
+            } else if (data.label === "Tiêu cực") {
+                resultBox.classList.add("bg-red-100", "border-red-500", "text-red-800");
+            } else {
+                resultBox.classList.add("bg-yellow-100", "border-yellow-500", "text-yellow-800");
+            }
+        }
 
-<div class="result-row">
-
-<span class="result-label">
-Sentiment:
-</span>
-
-<span id="sentiment" class="result-value"></span>
-
-</div>
-
-<div class="result-row">
-
-<span class="result-label">
-Explanation:
-</span>
-
-<span id="explanation" class="result-value"></span>
-
-</div>
-
-</div>
-
-<p
-id="error"
-class="error-message"
-aria-live="assertive">
-</p>
-
-</section>
-
-</main>
-
-<footer class="footer">
-
-<p>AI Sentiment Analyzer Project</p>
-
-</footer>
-
-<script src="script.js"></script>
-
+        // Gán hàm vào window để nút HTML có thể gọi được
+        window.analyzeSentiment = analyzeSentiment;
+    </script>
 </body>
-
 </html>
